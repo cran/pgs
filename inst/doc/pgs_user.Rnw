@@ -1,0 +1,446 @@
+% \VignetteIndexEntry{An R package for assessing the precision of geometric sampling}
+% \VignetteDepends{gsl,pgs}
+% \VignetteKeyword{Sampling}
+% \VignetteKeyword{Prediction error}
+% \VignetteKeyword{Stereology}
+\documentclass[11pt,a4paper]{report}
+
+\usepackage[latin1]{inputenc}
+\usepackage{graphicx}
+\usepackage{path}
+\usepackage{listings}
+
+\newcommand{\function}[1]{\textsf{#1}}
+\newcommand{\varname}[1]{\textsf{#1}}
+\newcommand{\class}[1]{\textit{#1}}
+
+\title{PGS user manual\\version 0.2-0}
+\author{Ki\^en Ki\^eu and Marianne Mora}
+
+\begin{document}
+
+\lstset{language=R}
+
+\maketitle
+\tableofcontents
+
+\chapter{Introduction}
+\label{chap:introduction}
+
+Using stereological methods it is possible to estimate geometric
+parameters (planar area, volume, surface area, number etc...) of
+spatial structures (2D or 3D) from partial observations. Partial
+observations consist of intersections of the spatial structure under
+study and figures (test sets) such as points, quadrats, lines,
+planes... In practice, the figures are often systematically
+distributed in the containing space: the whole sampling device forms a
+lattice of figures. Such sampling devices are commonly used both
+because they are easy to implement and because of their statistical
+efficiency, see e.g.\ \cite{ref/95}.
+
+Provided that the lattice of figures is uniformly randomly translated,
+most stereological estimators turn out to be unbiased. However
+assessing the precision of stereological estimators is usually not
+straightfoward. A naive approach consists of considering the sampling
+figures as non-correlated statistical units. However as shown by
+Gundersen \& Jensen \cite{ref/95}, this approach tends to overestimate
+the estimation variability. An alternative approach is based on a
+theory developped by Kendall \cite{ref/689, ref/634} and Matheron
+\cite{ref/426, ref/469}. This approach provides asymptotic
+approximations of mean square errors (MSE). The approximations converge when
+the sampling density grows. Stereological applications of
+Kendall-Matheron theory have been developped in several papers
+\cite{ref/95, ref/32, ref/652, ref/813, ref/432, ref/862, ref/863,
+  ref/1121, ref/869, ref/861, ref/851, ref/864, ref/359, ref/691,
+  ref/807, ref/433}. 
+
+General MSE formulae for planar area and volume estimation/prediction
+have been derived \cite{ref/910, ref/964}. These formulae can be used
+for a large set of sampling devices : point lattices, point pattern
+lattices, quadrat lattices, series of parallel lines, strips... Due to
+their very simple form, the formulae can be used to compare sampling
+devices independently of the spatial structure under study. Hence they
+can be very useful in \emph{a priori} sampling design. Also they can
+be used for MSE estimation from data, see e.g. \cite{1122}. The R
+package \emph{pgs} provides tools for computing MSE approximations and
+estimates for area and volume predictors. 
+
+Notice that this document does not aim to be a self-contained
+introduction to methods for assessing the precision of stereological
+estimators. The reader is referred to e.g. \cite{ref/964, ref/1122} for
+a presentation of those methods.
+
+Note that the current version (0.2-0) of the package is still at an
+experimental stage of development.
+
+\chapter{Installation of pgs package}
+\label{chap:installation}
+
+\section{Prerequisites}
+\label{sec:prerequisites}
+
+
+R is a free statistical software which consists of many packages (see
+\path|http://www.R-project.org|). R is available for many platforms
+(PC/Windows, PC/Linux, Mac/OsX,...). It is assumed here that R is
+already installed.
+
+We have not tested the pgs package under old versions of R. Any fairly recent version
+should fit. The pgs package depends on three other R
+packages: 
+\begin{itemize}
+\item The package \emph{methods} is a standard package of R. It should
+  be already installed in most cases. If not, it can be downloaded and
+  installed from the Web site of R.
+\item The package \emph{adapt} performs numerical integration. It can
+  be downloaded and installed from the Web site of R.
+\item The package \emph{gsl} is a front end to the GNU Scientific Library. It can
+  be downloaded and installed from the Web site of R. Linux users  should install first the Gnu Scientific Library (\path|http://www.gnu.org/software/gsl/|.
+\end{itemize}
+Most installation procedures are dependency aware and should install these required packages if not yet installed.
+
+
+\section{Obtaining and installing pgs}
+\label{sec:obt:pgs}
+
+The package pgs is available on CRAN (Comprehensive R Archive
+Network). Therefore it can be downloaded and installed using
+e.g. \function{install.packages} or package (installation and
+management) tools available in R GUI's (see R general
+documentation). Note that this package is distributed under the CeCILL
+free license which is rather similar to the GPL license.
+
+In order to load pgs package in a R session, just type
+<<load:lib>>=
+library(pgs)
+@ 
+in the R command window. The documentation of pgs is available in the
+on-line help of R.
+
+\chapter{Lattice of figures}
+\label{chap:lattice:figures}
+
+The sampling devices considered here are lattice of figures. A
+\emph{figure} is a simple geometric test set such as a single point, a
+finite point pattern, a quadrat, a segment, a line or a plane. By translations, the
+figure is repeated in space at regularly spaced locations. The
+translation vectors form a \emph{vector lattice}.
+
+\section{Classes of geometric objects} In pgs package, geometric entities are
+represented by objects. The package operates on three classes of geometric objects:
+\begin{itemize} 
+\item Simple figures are represented by objects of the class \class{Figure}.
+\item The vector lattices are represented by objects of the class
+\class{VecLat}.
+
+\item The lattices of figures are represented by objects of the class \class{FigLat}. 
+\end{itemize}
+
+Note that the classes have been designed for lattices and figures in spaces with arbitrary dimensions (not only in 2D and 3D spaces).
+
+Most users will handle only \class{FigLat} objects generated using predefined generating functions, see sections \ref{sec:generators:2d} and \ref{sec:generators:3d}. 
+
+\section{Specific generators of some particular planar lattices of figures}
+\label{sec:generators:2d}
+
+The package provides specific generator functions for some common planar lattices of figures: 
+\begin{itemize}
+\item The figure can be a finite point pattern, a quadrat, a segment or a line.
+\item The 2D vector lattices are rectangular,  hexagonal or quincunx.
+\end{itemize}
+
+For instance, the command line
+<<def:plat>>=
+plat=PPHexLat2(delta=1,n=4)
+@ 
+creates an hexagonal lattice of point patterns with 4 points lying in a square of side length equal to 0.2 (default value, see arguments \varname{hp} and \varname{vp}, below, for changing the default value).
+The argument \varname{delta} determines the distance between homologous points in two neighbour point patterns. The second argument \varname{n} gives the number of points in each point pattern. 
+
+The object  \varname{plat} is printed as follows:
+
+<<print:lat,echo=TRUE>>=
+print(plat)
+@ 
+The function \function{print} displays the \varname{generating matrix} of the hexagonal vector lattice with its determinant and the column matrix \varname{coord} containing the Cartesian coordinates of the points. 
+
+Other arguments can be passed to the function \function{PPHexLat2}: \varname{hp} and \varname{vp} determine the ``size'' of the point pattern bounding rectangle and \varname{h3} defines the orientation of the point pattern. 
+
+Similarly, rectangular and quincunx lattices of point patterns can be created by using the specific generator functions \function{PPRectLat2} and \function{PPQcxLat2}.
+
+For planar lattices of quadrats or segments, use the generators \function{QHexLat2}, \function{QRectLat2}, \function{SHexLat2} and \function{SRectLat2}. The function \function{LLat2} creates planar lattices of lines.
+
+For a complete documentation of these functions, see the on-line help.
+
+A \function{plot} function is implemented for planar lattices of figures.
+The command line
+<<plot:plat:1,echo=FALSE>>=
+pdf("plat.pdf",onefile=FALSE,height=1,width=1,pointsize=11)
+par(mar=c(1,1,1,1))
+par(xaxt="n",yaxt="n")
+@ 
+<<plot:plat:2>>=
+plot(plat,xlim=c(0,3),ylim=c(0,3),pch="+",cex=0.3)
+@ 
+<<plot:plat:3,echo=FALSE,results=hide>>=
+dev.off()
+@ 
+yields the graphic shown in Figure \ref{fig:plat}.
+\begin{figure}[ht]
+  \centering
+  \scalebox{0.5}{\includegraphics{plat.pdf}}
+  \caption{Plot of the object \varname{plat} representing a lattice of point patterns.}
+  \label{fig:plat}
+\end{figure}
+\section{Specific generators of some particular 3D lattices of figures}
+\label{sec:generators:3d}
+
+The package provides three specific generators of 3D lattices of horizontal point patterns: rectangular , body-center rectangular and face-centered rectangular lattices of horizontal point patterns.
+For instance, the command line
+<<def:p3lat>>=
+p3lat=PPRectLat3(dx=1,dy=1,dz=1,n=4)
+@ 
+creates a 3D cubic lattice of point patterns with 4 points lying in a horizontal square of side length equal to 0.2 (default value).
+
+Body-centered and face-centered lattices of horizontal point patterns can be created by using the generators \function{PPBCRectLat3} and \function{PPFCRectLat3}.
+
+Complete documentations of the generators are available in the on-line help.
+
+\section{Generator  \function{FigLat}}
+\label{sec:figlat}
+
+The generator function \function{FigLat} can be used to create user-defined lattices of figures.
+
+The lattice of figures \varname{plat} defined above can also be obtained by the command line
+<<ex:figlat>>=
+plat=FigLat(2,HexLat2(sqrt(3)/2),PP2(n=4,h=1/5))
+@ 
+
+\begin{itemize}
+\item The first argument passed to \function{FigLat} is the dimension of the
+space where the structure lies ($2$ for planar structures).
+\item The second argument passed to the function \function{FigLat} is a
+  \class{VecLat} object representing the vector lattice. 
+  
+  Such a vector lattice can be created by the general generator
+  \function{VecLat}. The unique argument of the function
+  \function{VecLat} is the generating matrix of the vector lattice.
+  
+  Planar hexagonal lattices may be generated in a simpler way by the
+  specific generator \function{HexLat2}. The argument of the function
+  is the determinant of the generating matrix, that is the area of a
+  fundamental tile of the hexagonal lattice. Similarly, the generator
+  \function{RectLat2} is used for planar rectangular lattices.
+\item The third argument defines the figure, here a point pattern
+  represented by a \class{PointPattern} object. 
+  
+  The generator \function{PointPattern} generates such objects, it
+  takes as a unique argument a column matrix containing the Cartesian
+  coordinates of the points. 
+  
+  The specific function \function{PP2} creates some particular planar
+  point patterns. The 3D generator \function{PP3} converts these
+  planar point patterns into horizontal 3D point patterns.
+ \end{itemize}
+
+\chapter{Planar area prediction}
+\label{chap:area}
+
+The spatial structure of interest is considered as a random compact
+planar set. Note that the case where the structure is deterministic
+may be considered as a special case of this framework. The feature to
+be \emph{predicted} is the (total) area of the structure. The term
+``prediction'' is preferred to estimation because the area is a random
+variable instead of a fixed parameter. 
+
+The structure under study is sampled by a lattice of figures, see
+examples in Figure~\ref{fig:ex:lafig}. The area predictor is the
+``content'' of the intersection of the structure with the lattice of
+figures divided by the sampling intensity (mean content of the lattice
+of figures seen in a region with unit area). For instance, if the
+sampling device is a lattice of points, the area predictor is equal to
+the number of lattice points hitting the structure multiplied by the
+area of a tile of the lattice. If the sampling device is a lattice of
+quadrats, the area predictor is the area of the structure observed in
+the quadrats divided by the fraction of the plane covered by the quadrats.
+\begin{figure}[htbp]
+  \centering
+  \includegraphics{ex_lafig.pdf}
+  \caption{Examples of lattices of figures used for area prediction. A
+    lattice of figures is superimposed on a planar structure (shown in
+    grey). The total area of the planar structure is predicted from
+    point counts, length or area measurements. (a) Hexagonal lattice
+    of points, (b) lattice of point patterns, (c) lattice of quadrats,
+    (d) lattice of segments, (e) lattice of (infinite) lines, (f)
+    lattice of (infinite) strips.}
+  \label{fig:ex:lafig}
+\end{figure}
+
+If the lattice of figures is uniformly randomly translated, the area
+predictor is unbiased: the conditional mean prediction given the
+structure is equal to the area. The approximations for the prediction
+MSE as given in \cite{ref/942} are obtained under the assumption that the normals to the boundary of the structure are isotropically distributed. Note that if  the lattice of figures is isotropically randomly rotated, the MSE approximations hold even for anisotropic boundaries.
+
+\section{MSE approximation formulae in the isotropic case}
+\label{sec:area:mse}
+
+Under the assumption of isotropy, the MSE approximation formulae  involve two terms:
+\begin{itemize}
+\item one term depending only on sampling parameters and involving the multidimensional Epstein zeta function.
+\item one term depending on the boundary of the structure under study: the mean perimeter.
+\end{itemize}
+
+The MSE approximation is computed using the function \function{area.mse}:
+
+<<area:mse:approx>>=
+area.mse(plat,B=1,L=3)
+@ 
+
+\begin{itemize}
+\item The first argument \varname{plat} is the sampling test system.
+\item The second argument \varname{B} is the mean perimeter of the structure (to be provided).
+\item The third argument is an integer used as a criterion for stopping summation of the Epstein zeta function.
+\end{itemize}
+
+\section{Practical design of a sampling scheme}
+\label{sec:sampling:design}
+
+Let us consider the case where the figure is fixed and the vector
+lattice is defined up to a scaling parameter. The function
+\function{latscale} computes the scaling parameter \varname{u} such that the
+prediction coefficient of error is equal to a given value.
+
+<<design>>=
+u = latscale(PPHexLat2(n=4),A=1,shape=5,CE.n=0.05,upper=2)
+u
+@ 
+
+\begin{itemize}
+\item The first argument passed to the function is the lattice of figures.
+  The associated vector lattice is supposed to be unit (i.e.\ its
+  determinant must be equal to $1$). The lattice of figures
+  \varname{plat} created in Section \ref{sec:generators:2d} does not
+  fulfill this condition (determinant equal to
+  $\Sexpr{signif(plat@vlat@det,3)}$.  The vector lattice associated with the
+  lattice of figures defined by \lstinline!PPHexLat2(n=4)! is unit.
+\item The second argument \varname{A} is a rough estimate of the mean area.
+\item The third argument is a rough estimate of the shape parameter
+  $B/\sqrt{A}$. It may be determined approximately using the nomogram
+  provided in \cite{ref/95}.
+\item The fourth parameter is the nominal coefficient of error.
+\item The fifth parameter is an upper bound for the interval where $u$
+  is to be searched.
+\end{itemize}
+
+Hence in order to get area predictions with a coefficient of error
+equal to $5 \%$, one should use an hexagonal lattice where the spacing
+between homologous points is equal to $\Sexpr{signif(u,3)}$.
+
+\section{Variance and MSE estimation}
+\label{sec:area:mse:estimation}
+
+Let us consider the case where a series of say $10$ structures have
+been sampled. The sampling lattice of figures is represented by
+\varname{plat}, see Figure~\ref{fig:plat}. The point counts
+are given by
+<<counts>>=
+counts = c(5,3,1,4,1,3,4,2,4,5)
+@ 
+The area predictions are computed as follows
+<<area:pred>>=
+areaPred = counts/(4*plat@vlat@det)
+areaPred
+@ 
+The prediction variance is 
+<<var>>=
+var(areaPred)
+@ 
+
+The prediction variance is the sum of the area variance and of the
+area prediction MSE. The MSE formula as given in \cite{ref/942}
+requires parameters depending on the lattice of figures and the mean
+perimeter of the structure under study. Let us consider the case where
+the shape parameter $B/\sqrt{A}$ may be approximated by $5$ in view of
+the nomogram given in \cite{ref/95}. The mean perimeter is approximated by
+<<perimeter>>=
+B = 5*sqrt(mean(areaPred))
+B
+@ 
+
+The MSE is computed using the function
+\function{area.mse}:
+
+<<area:mse>>=
+area.mse(plat, B)
+@ 
+
+The area variance may be computed as the difference between the
+prediction variance and the prediction MSE.
+<<>>=
+var(areaPred)-area.mse(plat, B)
+@ 
+
+Above, the MSE has been estimated based on a ``visual'' estimate of the shape parameter $B/\sqrt{A}$. It should be noticed that some figures like segments, lines and quadrats provide data for perimeter estimation. For instance, consider line sampling. The total intercept length provides the area estimate while the total number of intercepts provides the perimeter estimate. In such a case, a MSE estimate is obtained by providing the perimeter estimate as the argument \varname{B} of the function \function{area.mse}.
+
+Below, we focus on MSE estimation based uniquely on data used for area prediction.
+
+\subsection{MSE estimation in the isotropic case}
+\label{sec:mse:est:iso}
+
+It is supposed that individual data for each sampling figure are available. The mean perimeter estimation is based on short-range data covariations (empirical covariogram near the origin) and depends on the sampling figure geometry. Then the MSE can be estimated by providing that mean perimeter estimate to the function \function{area.mse}.
+
+All estimate computations can be done with the function \function{area.mse.est}.
+
+As an example, consider the case where a single planar structure is sampled by the rectangular lattice of point patterns  \varname{pplat} defined by 
+<<pplat>>=
+pplat=PPRectLat2(1,1,5,0.4)
+@ 
+
+The first and second arguments are the horizontal and vertical spacings of the vector lattice. The third and fourth arguments define the point pattern : 5 points lying in a square of side length equal to 0.4 (4 points lying at the square corners and one middle point).
+
+The data to be used are contained in the matrix \varname{pp.counts}  displayed as
+<<data,echo=false>>=
+load("italy_pp_counts.RData")
+write.table(pp.counts,row.names=FALSE,col.names=FALSE)
+@ 
+
+Each entry of the matrix \varname{pp.counts} contains the individual data of a  sampling  point pattern. The matrix may be filled from input files: either text or csv files (use respectively the functions \function{read.table} or \function{read.csv}).
+
+The sampling grid parameters and the collected data are passed as arguments to the function \function{FigLatData}.
+
+<<figlatdata>>=
+ppldata=FigLatData(pplat,pp.counts)
+@ 
+
+Both the mean perimeter and  MSE estimates can be computed with the function \function{area.mse.est}:
+<<area:mse:est>>=
+area.mse.est(ppldata,mse.only=FALSE,iso=TRUE)
+@ 
+\begin{itemize}
+\item The first argument passed to the function is the lattice of figures and the array containing the data. The data array is reduced  to a matrix (as in the example) when a single structure is sampled.
+\item The second argument is set equal to TRUE (the default value is FALSE) to specify  that estimates must be computed under the assumption of isotropy.
+\item The third argument is set equal to TRUE (default value)  if both the mean perimeter and  MSE estimates are required. Otherwise, only the MSE estimate is provided.
+
+\end{itemize}
+ 
+The function \function{area.mse.est} has an extra argument \varname{diff2use} defining the data covariations to be used for the MSE estimation. See the on-line help for more details.
+
+\subsection{MSE estimation under mild anisotropy}
+\label{sec:mse:est:aniso}
+
+The MSE estimation method can be  extended to the case where  the boundary can be made isotropic by a specific area preserving deformation: stretching the structure along a given direction, compressing it in the orthogonal direction. For sake of simplicity, this transformation is called stretching. The stretching is applied to both  the structure and the lattice of figures. For the extension to be valid, the data provided to the function \function{area.mse.est} must be invariant under the stretching. This is the case, for example,  for lattices of point patterns and quadrats.
+
+The function \function{area.mse.est} first estimates the stretching in order to provide the mean perimeter and the MSE estimates.
+
+For the lattice of point patterns and the data given in \varname{ppldata}, one gets
+
+<<stretch>>=
+area.mse.est(ppldata,mse.only=FALSE,iso=FALSE)
+@ 
+
+The argument \varname{iso} is set equal to FALSE to specify that a stretching has to be applied.
+
+The component list \varname{deformation} returned by \function{area.mse.est} defines the stretching matrix.
+\bibliographystyle{abbrv}
+\bibliography{pgs_user}
+
+\end{document}
