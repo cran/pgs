@@ -1,8 +1,8 @@
 ### Source file for PGS package
-### Version: 0.1-0
+### Version: 0.3-0
 ### Authors: Kien Kieu & Marianne Mora
 ### License: CeCILL (see COPYING file) 
-### Copyright © 2005 INRA
+### Copyright © 2010 INRA, Université Paris Ouest Nanterre la Défense
 
 #######################################################################
 #                        Generic functions                            #
@@ -212,16 +212,19 @@ setMethod("content","PointPattern",
 ## Covariograms of the figures.
 setMethod("covariogram",signature(x="Quadrat",f="function"),
           function(x,f,sym=FALSE){
+            ucoord <- x@coord
             if(sym){
-              integrand<-function(h){
-                prod(x@coord-abs(h))*(f(h)+f(h*c(-1,1)))
+              integrand<-function(x){
+                prod(ucoord-abs(x))*(f(x)+f(x*c(-1,1)))
               }
             } else {
-              integrand<-function(h){
-                prod(x@coord-abs(h))*(f(h)+f(h*c(-1,1))+f(h*c(1,-1))+f(-h))
+              integrand<-function(x){
+                prod(ucoord-abs(x))*(f(x)+f(x*c(-1,1))+f(x*c(1,-1))+f(-x))
               }
             }
-            ifelse(sym,2,1)*adapt(2,c(0,0),x@coord,functn=integrand)$value
+            ifelse(sym,2,1)*cuhre(ndim=2,ncomp=1,integrand=integrand,
+                                  flags=list(verbose=0),
+                                  upper=ucoord,rel.tol=1e-2)$value
           })
 setMethod("covariogram",signature(x="Segment",f="function"),
           function(x,f,sym=FALSE){

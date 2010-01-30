@@ -92,7 +92,7 @@ packages:
 \item The package \emph{methods} is a standard package of R. It should
   be already installed in most cases. If not, it can be downloaded and
   installed from the Web site of R.
-\item The package \emph{adapt} performs numerical integration. It can
+\item The package \emph{R2Cuba} performs numerical integration. It can
   be downloaded and installed from the Web site of R.
 \item The package \emph{gsl} is a front end to the GNU Scientific Library. It can
   be downloaded and installed from the Web site of R. Linux users  should install first the Gnu Scientific Library (\path|http://www.gnu.org/software/gsl/|.
