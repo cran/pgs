@@ -1,11 +1,10 @@
-818094379e3bca407b4b88c759b57686 *DESCRIPTION
-ce577f90f8c3d1475985d05c9e276eb3 *NAMESPACE
+f430cbd209b5634a10278067c603f1d0 *DESCRIPTION
+575a0236bf03bbecf33c2a84e3fd4f3f *NAMESPACE
 558f496a0dfd477682d6b84269779ad9 *R/pgs.R
-8006745e52706b171284d3e7378a38d5 *inst/doc/ex_lafig.pdf
-d7d289c127394ed07bd4c8339175c030 *inst/doc/italy_pp_counts.RData
+1f2c460da04ce0f0e2aecbaf17c83b83 *build/vignette.rds
+80a1a4567589bcc6f413c5b8deeeb4a8 *inst/doc/pgs_user.R
 95c060fda30a8d9d5cde844df99b7d67 *inst/doc/pgs_user.Rnw
-a4b54fb526b3658dcf1325de9a8b3021 *inst/doc/pgs_user.bib
-ac3c776ad1e588af730bf31b74e8e83f *inst/doc/pgs_user.pdf
+e8ecab062c31b3cc13cfde223049af6f *inst/doc/pgs_user.pdf
 6a362dec766f14989641bef6c1381723 *man/BCRectLat3.Rd
 fde20aa83957ab3d5ce418e03a3eb457 *man/FCRectLat3.Rd
 e0a1ac2d75befcf401ed4d5430f859e8 *man/FigLat-class.Rd
@@ -54,3 +53,7 @@ ef9e84dab772a7c17f344401f0523eb3 *man/latscale.Rd
 e716dbeb2a2d6776a313b60df04da096 *man/scaling.Rd
 4a36443a6833c701c929a50906d9786d *man/vol.mse.Rd
 23ca6e5f787635bbd2e17b7834471d49 *man/vol.mse.est.Rd
+8006745e52706b171284d3e7378a38d5 *vignettes/ex_lafig.pdf
+d7d289c127394ed07bd4c8339175c030 *vignettes/italy_pp_counts.RData
+95c060fda30a8d9d5cde844df99b7d67 *vignettes/pgs_user.Rnw
+a4b54fb526b3658dcf1325de9a8b3021 *vignettes/pgs_user.bib
